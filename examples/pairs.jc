@@ -1,0 +1,29 @@
+え Pairs in JordanCalculus
+え
+え A pair stores two values by waiting for a selector function.
+え The selector receives the left value and the right value.
+
+え Church addition, used at the end to prove we extracted both fields.
+上げる タス は JムッJンッJフッJエッ「「ム」足す「フ」」足す「「「ン」足す「フ」」足す「エ」」
+
+え Church numerals.
+上げる ナナ は JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」」」」
+上げる ゴ は JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」」
+
+え Pair constructor: pair left right selector = selector left right.
+上げる クミ は JヒダリッJミギッJセッ「「セ」足す「ヒダリ」」足す「ミギ」
+
+え Extract the left field by passing a selector that chooses its first argument.
+上げる ヒダリ は Jペアッ「ペア」足す「JアッJビッア」
+
+え Extract the right field by passing a selector that chooses its second argument.
+上げる ミギ は Jペアッ「ペア」足す「JアッJビッビ」
+
+え Swap a pair by constructing a new pair with right and left reversed.
+上げる イレカエ は Jペアッ「「クミ」足す「「ミギ」足す「ペア」」」足す「「ヒダリ」足す「ペア」」
+
+え The pair (7, 5).
+上げる ペア は 「「クミ」足す「ナナ」」足す「ゴ」
+
+え Swap it to (5, 7), then add the two fields. The result is 12.
+「「タス」足す「「ヒダリ」足す「「イレカエ」足す「ペア」」」」足す「「ミギ」足す「「イレカエ」足す「ペア」」」
