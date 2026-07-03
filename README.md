@@ -9,6 +9,9 @@ As agentic coding appears in more of our daily workflows there is a commonly-hel
 A JordanCalculus program is an expression:
 
 ```text
+program ::= line*
+line ::= expression | comment | blank-line
+comment ::= え any-text
 
 variable ::= katakana katakana*
 katakana ::= ア | イ | ウ | エ | ...
@@ -17,6 +20,15 @@ expression ::= variable
              | expression 足す expression
              | 「 expression 」
 ```
+
+Comments use `え` and must occupy an entire line, optionally preceded by whitespace:
+
+```text
+え this whole line is ignored
+Jアッア
+```
+
+Newlines are otherwise treated like whitespace.
 
 ## Usage
 

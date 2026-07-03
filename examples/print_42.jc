@@ -1,0 +1,30 @@
+え 42 as a Church numeral.
+え
+え This expression evaluates to: mul 6 7
+
+え start the outer application: (mul 6) 7
+「
+
+え mul begins here.
+え
+え ム is the first number.
+え ン is the second number.
+え フ is the function being repeated.
+え
+え The body is:
+え   ム 足す 「ン 足す フ」
+え
+え In other words: repeat the operation 「ン」足す「フ」 a total of ム times.
+え If ム is 6 and ン is 7, this repeats seven applications six times.
+「JムッJンッJフッ「ム」足す「「ン」足す「フ」」」
+
+え first argument to mul: 6
+足す
+「JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」」」」
+
+え close the inner application: mul 6
+」
+
+え second argument to mul: 7
+足す
+「JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」」」」」

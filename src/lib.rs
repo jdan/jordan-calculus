@@ -31,26 +31,42 @@ fn lex(input: &str) -> Result<Vec<Tok>, String> {
     let chars: Vec<char> = input.chars().collect();
     let mut out = Vec::new();
     let mut i = 0;
+    let mut at_line_start = true;
     while i < chars.len() {
         let c = chars[i];
-        if c.is_whitespace() {
+        if c == 'え' && at_line_start {
+            while i < chars.len() && chars[i] != '\n' && chars[i] != '\r' {
+                i += 1;
+            }
+        } else if c.is_whitespace() {
+            if c == '\n' || c == '\r' {
+                at_line_start = true;
+            }
             i += 1;
+        } else if c == 'え' {
+            return Err(format!("comments must occupy an entire line; found 'え' at character {i}"));
         } else if c == 'J' {
+            at_line_start = false;
             out.push(Tok::Lambda);
             i += 1;
         } else if c == 'ッ' {
+            at_line_start = false;
             out.push(Tok::Dot);
             i += 1;
         } else if c == '「' {
+            at_line_start = false;
             out.push(Tok::LParen);
             i += 1;
         } else if c == '」' {
+            at_line_start = false;
             out.push(Tok::RParen);
             i += 1;
         } else if starts_with(&chars, i, "足す") {
+            at_line_start = false;
             out.push(Tok::Plus);
             i += 2;
         } else if is_katakana(c) {
+            at_line_start = false;
             let start = i;
             i += 1;
             while i < chars.len() && is_katakana(chars[i]) && chars[i] != 'ッ' {
@@ -318,5 +334,19 @@ mod tests {
     #[test]
     fn parses_application_and_parens() {
         assert_eq!(parse("「Jアッア」足すイ").unwrap(), Expr::App(Box::new(Expr::Abs { param: "ア".into(), body: Box::new(Expr::Var("ア".into())) }), Box::new(Expr::Var("イ".into()))));
+    }
+
+
+    #[test]
+    fn parses_newlines_and_entire_line_comments() {
+        assert_eq!(
+            parse("え identity function\n  Jアッ\n  え return the argument\n  ア").unwrap(),
+            Expr::Abs { param: "ア".into(), body: Box::new(Expr::Var("ア".into())) }
+        );
+    }
+
+    #[test]
+    fn rejects_inline_comments() {
+        assert!(parse("Jアッア え nope").is_err());
     }
 }
