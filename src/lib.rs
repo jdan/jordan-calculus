@@ -211,6 +211,24 @@ pub fn compile_wat(expr: &Expr) -> String {
     i32.const 0
     call $alloc4)
 
+  (func $int (param $value i32) (result i32)
+    i32.const 2
+    local.get $value
+    i32.const 0
+    i32.const 0
+    call $alloc4)
+
+  (func $get_int (param $value i32) (result i32)
+    local.get $value
+    i32.const 4
+    i32.add
+    i32.load)
+
+  (func $primitive_inc (result i32)
+    i32.const 0
+    i32.const -1
+    call $closure)
+
   (func $bind (param $env i32) (param $var i32) (param $val i32) (result i32)
     i32.const 1
     local.get $var
@@ -255,6 +273,7 @@ pub fn compile_wat(expr: &Expr) -> String {
     }
 
     wat.push_str("  (func $apply (param $f i32) (param $arg i32) (result i32)\n");
+    wat.push_str("    local.get $f\n    i32.const 8\n    i32.add\n    i32.load\n    i32.const -1\n    i32.eq\n    if\n      local.get $arg\n      call $get_int\n      i32.const 1\n      i32.add\n      call $int\n      return\n    end\n");
     for lam in &lambdas {
         wat.push_str(&format!("    local.get $f\n    i32.const 8\n    i32.add\n    i32.load\n    i32.const {}\n    i32.eq\n    if\n      local.get $f\n      i32.const 4\n      i32.add\n      i32.load\n      local.get $arg\n      call $lambda_{}\n      return\n    end\n", lam.id, lam.id));
     }
@@ -262,6 +281,16 @@ pub fn compile_wat(expr: &Expr) -> String {
 
     wat.push_str("  (func (export \"main\") (result i32)\n");
     emit_expr(expr, &symbols, &lambda_ids, None, &mut wat, 2);
+    wat.push_str("  )\n\n");
+
+    wat.push_str("  (func (export \"main_as_i32\") (result i32)\n");
+    emit_expr(expr, &symbols, &lambda_ids, None, &mut wat, 2);
+    wat.push_str("    call $primitive_inc\n");
+    wat.push_str("    call $apply\n");
+    wat.push_str("    i32.const 0\n");
+    wat.push_str("    call $int\n");
+    wat.push_str("    call $apply\n");
+    wat.push_str("    call $get_int\n");
     wat.push_str("  )\n)");
     wat
 }
@@ -348,5 +377,12 @@ mod tests {
     #[test]
     fn rejects_inline_comments() {
         assert!(parse("Jアッア え nope").is_err());
+    }
+
+    #[test]
+    fn emits_church_numeral_i32_adapter() {
+        let wat = compile_wat(&parse("JフッJエッ「フ」足す「エ」").unwrap());
+        assert!(wat.contains("(func (export \"main_as_i32\") (result i32)"));
+        assert!(wat.contains("(func $primitive_inc (result i32)"));
     }
 }

@@ -41,5 +41,8 @@ The emitted module exports:
 
 - `memory`
 - `main() -> i32`, returning a runtime handle to the resulting closure/value
+- `main_as_i32() -> i32`, an adapter that treats the result as a Church numeral and returns a WebAssembly `i32`
+
+`main_as_i32` does not add any syntax to JordanCalculus. It is only a generated WebAssembly adapter: it applies the program result to an internal increment function and zero.
 
 This is an MVP compiler/runtime for untyped call-by-value lambda calculus. Free variables trap at runtime.
