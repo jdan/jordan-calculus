@@ -120,8 +120,13 @@ fn respond<W: Write>(output: &mut W, request: &Value, result: Value) -> io::Resu
 
 fn definition_location(uri: &str, text: &str, pos: Pos) -> Option<Value> {
     let (body, top_defs) = lsp_source_body_and_top_defs(text);
-    if let Some((_, span)) = top_defs.iter().find(|(_, span)| contains(*span, pos)) {
+    if let Some((_, span)) = top_defs.iter().find(|(_, span)| contains_fuzzy(*span, pos)) {
         return Some(location(uri, *span));
+    }
+    if let Some(name) = variable_at_position(text, pos) {
+        if let Some((_, span)) = top_defs.iter().rev().find(|(n, _)| n == &name) {
+            return Some(location(uri, *span));
+        }
     }
     let tokens = lex(&body).ok()?;
     let mut parser = Parser { tokens, pos: 0 };
@@ -177,7 +182,7 @@ fn top_level_definition_name(line_no: usize, line: &str) -> Option<(String, Span
 fn find_definition(expr: &Expr, pos: Pos, env: &mut Vec<(String, Span)>, top_defs: &[(String, Span)]) -> Option<Span> {
     match expr {
         Expr::Var { name, span } => {
-            if contains(*span, pos) {
+            if contains_fuzzy(*span, pos) {
                 env.iter()
                     .rev()
                     .find(|(n, _)| n == name)
@@ -186,7 +191,7 @@ fn find_definition(expr: &Expr, pos: Pos, env: &mut Vec<(String, Span)>, top_def
             } else { None }
         }
         Expr::Abs { param, param_span, body, .. } => {
-            if contains(*param_span, pos) {
+            if contains_fuzzy(*param_span, pos) {
                 return Some(*param_span);
             }
             env.push((param.clone(), *param_span));
@@ -198,8 +203,51 @@ fn find_definition(expr: &Expr, pos: Pos, env: &mut Vec<(String, Span)>, top_def
     }
 }
 
+
+fn variable_at_position(input: &str, pos: Pos) -> Option<String> {
+    let line = input.lines().nth(pos.line)?;
+    let chars: Vec<char> = line.chars().collect();
+    for start in 0..chars.len() {
+        if !is_variable_char(chars[start]) {
+            continue;
+        }
+        let mut end = start + 1;
+        while end < chars.len() && is_variable_char(chars[end]) {
+            end += 1;
+        }
+        let span = Span {
+            start: Pos { line: pos.line, character: start },
+            end: Pos { line: pos.line, character: end },
+        };
+        if contains_fuzzy(span, pos) {
+            return Some(chars[start..end].iter().collect());
+        }
+    }
+    None
+}
+
+fn is_variable_char(c: char) -> bool {
+    is_katakana(c) && c != 'ッ'
+}
+
 fn contains(span: Span, pos: Pos) -> bool {
     span.start <= pos && pos < span.end
+}
+
+fn contains_fuzzy(span: Span, pos: Pos) -> bool {
+    if contains(span, pos) {
+        return true;
+    }
+    // Neovim/LSP positions are UTF-16 code-unit offsets. This LSP currently
+    // stores character offsets. For non-BMP this would need full conversion;
+    // for JordanCalculus' BMP Katakana, the common mismatch is that clients
+    // can report a position one codepoint before or after the token while the
+    // cursor is visually on it. Accept adjacent positions on the same line so
+    // `gd` works anywhere inside a multi-character variable like クミ.
+    pos.line == span.start.line
+        && pos.line == span.end.line
+        && pos.character + 1 >= span.start.character
+        && pos.character <= span.end.character
 }
 
 fn lex(input: &str) -> Result<Vec<Tok>, String> {
@@ -354,5 +402,23 @@ mod tests {
         assert_eq!(loc[0]["range"]["start"]["line"], 0);
         assert_eq!(loc[0]["range"]["start"]["character"], 4);
         assert_eq!(loc[0]["range"]["end"]["character"], 12);
+    }
+
+    #[test]
+    fn finds_definition_from_inside_multi_character_variable() {
+        let text = "上げる クミ は Jアッア\nクミ";
+        let loc = definition_location("file:///x.jc", text, Pos { line: 1, character: 1 }).unwrap();
+        assert_eq!(loc[0]["range"]["start"]["line"], 0);
+        assert_eq!(loc[0]["range"]["start"]["character"], 4);
+        assert_eq!(loc[0]["range"]["end"]["character"], 6);
+    }
+
+    #[test]
+    fn finds_top_level_definition_from_definition_body() {
+        let text = "上げる クミ は Jアッア\n上げる ステプ は 「クミ」足す「クミ」\nステプ";
+        let loc = definition_location("file:///x.jc", text, Pos { line: 1, character: 13 }).unwrap();
+        assert_eq!(loc[0]["range"]["start"]["line"], 0);
+        assert_eq!(loc[0]["range"]["start"]["character"], 4);
+        assert_eq!(loc[0]["range"]["end"]["character"], 6);
     }
 }
