@@ -10,9 +10,10 @@ A JordanCalculus program is an expression:
 
 ```text
 program ::= line*
-line ::= expression | definition | comment | blank-line
+line ::= expression | definition | import | comment | blank-line
 comment ::= え any-text
 definition ::= 上げる variable は expression
+import ::= 貰う variable は path
 
 variable ::= katakana katakana*
 katakana ::= ア | イ | ウ | エ | ...
@@ -43,6 +44,20 @@ Definitions do not add new core syntax. They are expanded before parsing. The ex
 ```text
 「Jアイデンティティッアイデンティティ」足す「Jアッア」
 ```
+
+Top-level imports use `貰う` and `は` with an unquoted file path relative to the current source file:
+
+```text
+貰う タス は prelude.jc
+```
+
+The imported file must contain a matching top-level definition:
+
+```text
+上げる タス は JムッJンッJフッJエッ...
+```
+
+Imports are also expanded before parsing; they do not add core expression syntax.
 
 ## Usage
 

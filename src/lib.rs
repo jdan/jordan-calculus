@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::{collections::{BTreeMap, HashMap}, fs, path::{Path, PathBuf}};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Expr {
@@ -18,7 +18,11 @@ enum Tok {
 }
 
 pub fn parse(input: &str) -> Result<Expr, String> {
-    let expanded = expand_top_level_macros(input)?;
+    parse_with_base_dir(input, Path::new("."))
+}
+
+pub fn parse_with_base_dir(input: &str, base_dir: &Path) -> Result<Expr, String> {
+    let expanded = expand_top_level_macros(input, base_dir)?;
     let tokens = lex(&expanded)?;
     let mut p = Parser { tokens, pos: 0 };
     let expr = p.parse_expr()?;
@@ -29,7 +33,7 @@ pub fn parse(input: &str) -> Result<Expr, String> {
 }
 
 
-fn expand_top_level_macros(input: &str) -> Result<String, String> {
+fn expand_top_level_macros(input: &str, base_dir: &Path) -> Result<String, String> {
     let mut definitions = Vec::<(String, String)>::new();
     let mut body_lines = Vec::<&str>::new();
 
@@ -37,18 +41,13 @@ fn expand_top_level_macros(input: &str) -> Result<String, String> {
         let trimmed = line.trim_start();
         if trimmed.starts_with("上げる") {
             let rest = trimmed.trim_start_matches("上げる").trim_start();
-            let Some((name, expr)) = rest.split_once('は') else {
-                return Err(format!("expected `上げる NAME は EXPRESSION` on line {}", line_no + 1));
-            };
-            let name = name.trim();
-            let expr = expr.trim();
-            if name.is_empty() || expr.is_empty() {
-                return Err(format!("expected `上げる NAME は EXPRESSION` on line {}", line_no + 1));
-            }
-            if !name.chars().all(|c| is_katakana(c) && c != 'ッ') {
-                return Err(format!("macro name must be a Katakana variable on line {}", line_no + 1));
-            }
-            definitions.push((name.to_string(), expr.to_string()));
+            let (name, expr) = parse_binding_line(rest, "上げる", line_no)?;
+            definitions.push((name, expr));
+        } else if trimmed.starts_with("貰う") {
+            let rest = trimmed.trim_start_matches("貰う").trim_start();
+            let (name, import_path) = parse_binding_line(rest, "貰う", line_no)?;
+            let expr = load_imported_definition(&name, &import_path, base_dir)?;
+            definitions.push((name, expr));
         } else if !trimmed.is_empty() && !trimmed.starts_with('え') {
             body_lines.push(line);
         }
@@ -59,6 +58,59 @@ fn expand_top_level_macros(input: &str) -> Result<String, String> {
         body = format!("「J{name}ッ{body}」足す「{value}」");
     }
     Ok(body)
+}
+
+fn parse_binding_line(rest: &str, keyword: &str, line_no: usize) -> Result<(String, String), String> {
+    let Some((name, expr)) = rest.split_once('は') else {
+        return Err(format!("expected `{keyword} NAME は EXPRESSION` on line {}", line_no + 1));
+    };
+    let name = name.trim();
+    let expr = expr.trim();
+    if name.is_empty() || expr.is_empty() {
+        return Err(format!("expected `{keyword} NAME は EXPRESSION` on line {}", line_no + 1));
+    }
+    if !name.chars().all(|c| is_katakana(c) && c != 'ッ') {
+        return Err(format!("macro name must be a Katakana variable on line {}", line_no + 1));
+    }
+    Ok((name.to_string(), expr.to_string()))
+}
+
+fn load_imported_definition(name: &str, import_path: &str, base_dir: &Path) -> Result<String, String> {
+    if import_path.contains('"') || import_path.contains('「') || import_path.contains('」') {
+        return Err(format!("import paths are unquoted: use `貰う {name} は path/to/file.jc`"));
+    }
+    let path = resolve_import_path(import_path, base_dir);
+    let source = fs::read_to_string(&path)
+        .map_err(|e| format!("failed to import {name} from {}: {e}", path.display()))?;
+    find_exported_definition(&source, name)
+        .ok_or_else(|| format!("{} does not 上げる {name}", path.display()))
+}
+
+fn resolve_import_path(import_path: &str, base_dir: &Path) -> PathBuf {
+    let path = Path::new(import_path);
+    if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        base_dir.join(path)
+    }
+}
+
+fn find_exported_definition(source: &str, wanted: &str) -> Option<String> {
+    for line in source.lines() {
+        let trimmed = line.trim_start();
+        if !trimmed.starts_with("上げる") {
+            continue;
+        }
+        let rest = trimmed.trim_start_matches("上げる").trim_start();
+        let Some((name, expr)) = rest.split_once('は') else { continue };
+        if name.trim() == wanted {
+            let expr = expr.trim();
+            if !expr.is_empty() {
+                return Some(expr.to_string());
+            }
+        }
+    }
+    None
 }
 
 fn lex(input: &str) -> Result<Vec<Tok>, String> {
@@ -425,6 +477,19 @@ mod tests {
         assert_eq!(
             parse("上げる アイデンティティ は Jアッア
 アイデンティティ").unwrap(),
+            parse("「Jアイデンティティッアイデンティティ」足す「Jアッア」").unwrap()
+        );
+    }
+
+    #[test]
+    fn expands_morau_import_macros() {
+        let dir = std::env::temp_dir().join(format!("jordancalculus-import-test-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("prelude.jc"), "上げる アイデンティティ は Jアッア
+").unwrap();
+        assert_eq!(
+            parse_with_base_dir("貰う アイデンティティ は prelude.jc
+アイデンティティ", &dir).unwrap(),
             parse("「Jアイデンティティッアイデンティティ」足す「Jアッア」").unwrap()
         );
     }

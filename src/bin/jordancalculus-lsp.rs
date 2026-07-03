@@ -163,8 +163,13 @@ fn top_level_definition_name(line_no: usize, line: &str) -> Option<(String, Span
     let chars: Vec<char> = line.chars().collect();
     let mut i = 0;
     while chars.get(i).is_some_and(|c| c.is_whitespace()) { i += 1; }
-    if !starts_with(&chars, i, "上げる") { return None; }
-    i += "上げる".chars().count();
+    if starts_with(&chars, i, "上げる") {
+        i += "上げる".chars().count();
+    } else if starts_with(&chars, i, "貰う") {
+        i += "貰う".chars().count();
+    } else {
+        return None;
+    }
     while chars.get(i).is_some_and(|c| c.is_whitespace()) { i += 1; }
     let start = i;
     while chars.get(i).is_some_and(|c| *c != 'は') { i += 1; }
@@ -420,5 +425,14 @@ mod tests {
         assert_eq!(loc[0]["range"]["start"]["line"], 0);
         assert_eq!(loc[0]["range"]["start"]["character"], 4);
         assert_eq!(loc[0]["range"]["end"]["character"], 6);
+    }
+
+    #[test]
+    fn finds_import_macro_as_top_level_binding() {
+        let text = "貰う タス は prelude.jc\n「タス」足す「タス".replace('"', "」");
+        let loc = definition_location("file:///x.jc", &text, Pos { line: 1, character: 1 }).unwrap();
+        assert_eq!(loc[0]["range"]["start"]["line"], 0);
+        assert_eq!(loc[0]["range"]["start"]["character"], 3);
+        assert_eq!(loc[0]["range"]["end"]["character"], 5);
     }
 }

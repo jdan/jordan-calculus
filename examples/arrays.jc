@@ -14,8 +14,8 @@
 え This example builds [1, 2, 3, 4], folds it with Church addition, and returns 10.
 え The WebAssembly adapter main_as_i32 decodes the final Church numeral.
 
-え Church numeral addition.
-上げる タス は JムッJンッJフッJエッ「「ム」足す「フ」」足す「「「ン」足す「フ」」足す「エ」」
+え Import Church addition from the shared prelude.
+貰う タス は prelude.jc
 
 え Church numerals used by the array.
 上げる ゼロ は JフッJエッエ

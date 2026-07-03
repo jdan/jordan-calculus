@@ -9,6 +9,7 @@ syntax match jordanCalculusComment /^\s*え.*$/
 
 " Top-level definition macro.
 syntax match jordanCalculusDefinition /^\s*上げる\>/
+syntax match jordanCalculusImport /^\s*貰う\>/
 syntax match jordanCalculusDefinitionParticle /は/
 
 " Core JordanCalculus notation.
@@ -22,6 +23,7 @@ syntax match jordanCalculusVariable /[ァ-ヂツ-ヿㇰ-ㇿ]\+/
 
 highlight default link jordanCalculusComment Comment
 highlight default link jordanCalculusDefinition Keyword
+highlight default link jordanCalculusImport Include
 highlight default link jordanCalculusDefinitionParticle Keyword
 highlight default link jordanCalculusLambda Keyword
 highlight default link jordanCalculusDot Keyword
