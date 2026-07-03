@@ -1,0 +1,33 @@
+え Either / Result in JordanCalculus
+え
+え An Either value is one of two cases:
+え   ヒダリエ value
+え   ミギエ value
+え
+え This can model success/failure. In this example, left is an error code and
+え right is a successful numeric value.
+
+上げる タス は JムッJンッJフッJエッ「「ム」足す「フ」」足す「「「ン」足す「フ」」足す「エ」」
+上げる イチ は JフッJエッ「フ」足す「エ」
+上げる ゴ は JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」」
+上げる ロク は JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」」」
+
+え Left value: choose the left handler.
+上げる ヒダリエ は JアタイッJヒダリバッJミギバッ「ヒダリバ」足す「アタイ」
+
+え Right value: choose the right handler.
+上げる ミギエ は JアタイッJヒダリバッJミギバッ「ミギバ」足す「アタイ」
+
+え Map over only the right/success side.
+上げる ミギウツス は JカンスウッJリザルトッ「「リザルト」足す「Jエラーッ「ヒダリエ」足す「エラー」」」足す「Jアタイッ「ミギエ」足す「「カンスウ」足す「アタイ」」」
+
+え Add one to a successful value.
+上げる フヤス は Jンッ「「タス」足す「ン」」足す「イチ」
+
+え Collapse either to a number.
+え Left/error values become the error code.
+え Right/success values become the success value.
+上げる トリダス は Jリザルトッ「「リザルト」足す「Jエラーッエラー」」足す「Jアタイッアタイ」
+
+え Start with Right 5, map increment over it, then extract it. The result is 6.
+「トリダス」足す「「「ミギウツス」足す「フヤス」」足す「「ミギエ」足す「ゴ」」」
