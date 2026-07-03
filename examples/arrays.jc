@@ -1,0 +1,42 @@
+え Arrays in JordanCalculus
+え
+え One way to represent an array is as a Church-encoded list.
+え
+え An array is a function that accepts:
+え   1. a combining function
+え   2. an initial value
+え
+え Then it folds its elements with that combining function.
+え
+え For example, the array [1, 2, 3, 4] behaves like:
+え   combining 1 (combining 2 (combining 3 (combining 4 initial)))
+え
+え This example builds [1, 2, 3, 4], folds it with Church addition, and returns 10.
+え The WebAssembly adapter main_as_i32 decodes the final Church numeral.
+
+え Church numeral addition.
+上げる タス は JムッJンッJフッJエッ「「ム」足す「フ」」足す「「「ン」足す「フ」」足す「エ」」
+
+え Church numerals used by the array.
+上げる ゼロ は JフッJエッエ
+上げる イチ は JフッJエッ「フ」足す「エ」
+上げる ニ は JフッJエッ「フ」足す「「フ」足す「エ」」
+上げる サン は JフッJエッ「フ」足す「「フ」足す「「フ」足す「エ」」」
+上げる ヨン は JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」
+
+え Empty array.
+え It ignores the combining function and returns the initial value.
+上げる カラ は JシッJンッン
+
+え Add one item to the front of an array.
+え ヘ is the head element.
+え テ is the tail array.
+え シ is the combining function.
+え ン is the initial value.
+上げる ツナグ は JヘッJテッJシッJンッ「「シ」足す「ヘ」」足す「「「テ」足す「シ」」足す「ン」」
+
+え The array [1, 2, 3, 4].
+上げる ハイレツ は 「「ツナグ」足す「イチ」」足す「「「ツナグ」足す「ニ」」足す「「「ツナグ」足す「サン」」足す「「「ツナグ」足す「ヨン」」足す「カラ」」」」
+
+え Sum the array by folding with タス and starting from ゼロ.
+「「ハイレツ」足す「タス」」足す「ゼロ」
