@@ -10,8 +10,9 @@ A JordanCalculus program is an expression:
 
 ```text
 program ::= line*
-line ::= expression | comment | blank-line
+line ::= expression | definition | comment | blank-line
 comment ::= え any-text
+definition ::= 上げる variable は expression
 
 variable ::= katakana katakana*
 katakana ::= ア | イ | ウ | エ | ...
@@ -29,6 +30,19 @@ Jアッア
 ```
 
 Newlines are otherwise treated like whitespace.
+
+Top-level definitions use `上げる` and `は`:
+
+```text
+上げる アイデンティティ は Jアッア
+アイデンティティ
+```
+
+Definitions do not add new core syntax. They are expanded before parsing. The example above becomes:
+
+```text
+「Jアイデンティティッアイデンティティ」足す「Jアッア」
+```
 
 ## Usage
 

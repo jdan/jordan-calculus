@@ -119,24 +119,70 @@ fn respond<W: Write>(output: &mut W, request: &Value, result: Value) -> io::Resu
 }
 
 fn definition_location(uri: &str, text: &str, pos: Pos) -> Option<Value> {
-    let tokens = lex(text).ok()?;
+    let (body, top_defs) = lsp_source_body_and_top_defs(text);
+    if let Some((_, span)) = top_defs.iter().find(|(_, span)| contains(*span, pos)) {
+        return Some(location(uri, *span));
+    }
+    let tokens = lex(&body).ok()?;
     let mut parser = Parser { tokens, pos: 0 };
     let expr = parser.parse_expr().ok()?;
-    let target = find_definition(&expr, pos, &mut Vec::new())?;
-    Some(json!([{
+    let target = find_definition(&expr, pos, &mut Vec::new(), &top_defs)?;
+    Some(location(uri, target))
+}
+
+fn location(uri: &str, target: Span) -> Value {
+    json!([{
         "uri": uri,
         "range": {
             "start": { "line": target.start.line, "character": target.start.character },
             "end": { "line": target.end.line, "character": target.end.character }
         }
-    }]))
+    }])
 }
 
-fn find_definition(expr: &Expr, pos: Pos, env: &mut Vec<(String, Span)>) -> Option<Span> {
+fn lsp_source_body_and_top_defs(input: &str) -> (String, Vec<(String, Span)>) {
+    let mut body = Vec::new();
+    let mut defs = Vec::new();
+    for (line_no, line) in input.lines().enumerate() {
+        if let Some((name, span)) = top_level_definition_name(line_no, line) {
+            defs.push((name, span));
+            body.push(String::new());
+        } else {
+            body.push(line.to_string());
+        }
+    }
+    (body.join("\n"), defs)
+}
+
+fn top_level_definition_name(line_no: usize, line: &str) -> Option<(String, Span)> {
+    let chars: Vec<char> = line.chars().collect();
+    let mut i = 0;
+    while chars.get(i).is_some_and(|c| c.is_whitespace()) { i += 1; }
+    if !starts_with(&chars, i, "上げる") { return None; }
+    i += "上げる".chars().count();
+    while chars.get(i).is_some_and(|c| c.is_whitespace()) { i += 1; }
+    let start = i;
+    while chars.get(i).is_some_and(|c| *c != 'は') { i += 1; }
+    let mut end = i;
+    while end > start && chars[end - 1].is_whitespace() { end -= 1; }
+    if start == end { return None; }
+    let name: String = chars[start..end].iter().collect();
+    if !name.chars().all(|c| is_katakana(c) && c != 'ッ') { return None; }
+    Some((name, Span {
+        start: Pos { line: line_no, character: start },
+        end: Pos { line: line_no, character: end },
+    }))
+}
+
+fn find_definition(expr: &Expr, pos: Pos, env: &mut Vec<(String, Span)>, top_defs: &[(String, Span)]) -> Option<Span> {
     match expr {
         Expr::Var { name, span } => {
             if contains(*span, pos) {
-                env.iter().rev().find(|(n, _)| n == name).map(|(_, s)| *s)
+                env.iter()
+                    .rev()
+                    .find(|(n, _)| n == name)
+                    .or_else(|| top_defs.iter().rev().find(|(n, _)| n == name))
+                    .map(|(_, s)| *s)
             } else { None }
         }
         Expr::Abs { param, param_span, body, .. } => {
@@ -144,11 +190,11 @@ fn find_definition(expr: &Expr, pos: Pos, env: &mut Vec<(String, Span)>) -> Opti
                 return Some(*param_span);
             }
             env.push((param.clone(), *param_span));
-            let found = find_definition(body, pos, env);
+            let found = find_definition(body, pos, env, top_defs);
             env.pop();
             found
         }
-        Expr::App { left, right, .. } => find_definition(left, pos, env).or_else(|| find_definition(right, pos, env)),
+        Expr::App { left, right, .. } => find_definition(left, pos, env, top_defs).or_else(|| find_definition(right, pos, env, top_defs)),
     }
 }
 
@@ -299,5 +345,14 @@ mod tests {
         let loc = definition_location("file:///x.jc", text, Pos { line: 0, character: 7 }).unwrap();
         assert_eq!(loc[0]["range"]["start"]["character"], 1);
         assert_eq!(loc[0]["range"]["end"]["character"], 2);
+    }
+
+    #[test]
+    fn finds_top_level_definition_macro() {
+        let text = "上げる アイデンティティ は Jアッア\nアイデンティティ";
+        let loc = definition_location("file:///x.jc", text, Pos { line: 1, character: 0 }).unwrap();
+        assert_eq!(loc[0]["range"]["start"]["line"], 0);
+        assert_eq!(loc[0]["range"]["start"]["character"], 4);
+        assert_eq!(loc[0]["range"]["end"]["character"], 12);
     }
 }

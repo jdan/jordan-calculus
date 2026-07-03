@@ -18,13 +18,47 @@ enum Tok {
 }
 
 pub fn parse(input: &str) -> Result<Expr, String> {
-    let tokens = lex(input)?;
+    let expanded = expand_top_level_macros(input)?;
+    let tokens = lex(&expanded)?;
     let mut p = Parser { tokens, pos: 0 };
     let expr = p.parse_expr()?;
     if p.pos != p.tokens.len() {
         return Err(format!("unexpected token {:?} at token {}", p.tokens[p.pos], p.pos));
     }
     Ok(expr)
+}
+
+
+fn expand_top_level_macros(input: &str) -> Result<String, String> {
+    let mut definitions = Vec::<(String, String)>::new();
+    let mut body_lines = Vec::<&str>::new();
+
+    for (line_no, line) in input.lines().enumerate() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("上げる") {
+            let rest = trimmed.trim_start_matches("上げる").trim_start();
+            let Some((name, expr)) = rest.split_once('は') else {
+                return Err(format!("expected `上げる NAME は EXPRESSION` on line {}", line_no + 1));
+            };
+            let name = name.trim();
+            let expr = expr.trim();
+            if name.is_empty() || expr.is_empty() {
+                return Err(format!("expected `上げる NAME は EXPRESSION` on line {}", line_no + 1));
+            }
+            if !name.chars().all(|c| is_katakana(c) && c != 'ッ') {
+                return Err(format!("macro name must be a Katakana variable on line {}", line_no + 1));
+            }
+            definitions.push((name.to_string(), expr.to_string()));
+        } else if !trimmed.is_empty() && !trimmed.starts_with('え') {
+            body_lines.push(line);
+        }
+    }
+
+    let mut body = body_lines.join("\n").trim().to_string();
+    for (name, value) in definitions.into_iter().rev() {
+        body = format!("「J{name}ッ{body}」足す「{value}」");
+    }
+    Ok(body)
 }
 
 fn lex(input: &str) -> Result<Vec<Tok>, String> {
@@ -173,7 +207,7 @@ pub fn compile_wat(expr: &Expr) -> String {
 
     let mut wat = String::new();
     wat.push_str("(module\n");
-    wat.push_str(r#"  (memory (export "memory") 1)
+    wat.push_str(r#"  (memory (export "memory") 256)
   (global $heap (mut i32) (i32.const 16))
 
   (func $alloc4 (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
@@ -384,5 +418,14 @@ mod tests {
         let wat = compile_wat(&parse("JフッJエッ「フ」足す「エ」").unwrap());
         assert!(wat.contains("(func (export \"main_as_i32\") (result i32)"));
         assert!(wat.contains("(func $primitive_inc (result i32)"));
+    }
+
+    #[test]
+    fn expands_top_level_ageru_macros() {
+        assert_eq!(
+            parse("上げる アイデンティティ は Jアッア
+アイデンティティ").unwrap(),
+            parse("「Jアイデンティティッアイデンティティ」足す「Jアッア」").unwrap()
+        );
     }
 }
