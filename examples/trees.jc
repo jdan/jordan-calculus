@@ -1,0 +1,38 @@
+え Binary trees in JordanCalculus
+え
+え A binary tree can be represented as a fold.
+え
+え A tree is a function that accepts:
+え   1. a leaf handler
+え   2. a node handler
+え
+え A leaf applies the leaf handler to its value.
+え A node first folds its left and right children, then applies the node handler
+え to the folded left result, the node value, and the folded right result.
+え
+え This example sums all values in a tree.
+
+上げる タス は JムッJンッJフッJエッ「「ム」足す「フ」」足す「「「ン」足す「フ」」足す「エ」」
+上げる イチ は JフッJエッ「フ」足す「エ」
+上げる ニ は JフッJエッ「フ」足す「「フ」足す「エ」」
+上げる サン は JフッJエッ「フ」足す「「フ」足す「「フ」足す「エ」」」
+上げる ヨン は JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」
+上げる ゴ は JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」」
+
+え Leaf value: pass the value to the leaf handler.
+上げる ハ は JアタイッJハバッJエダバッ「ハバ」足す「アタイ」
+
+え Node left value right.
+え The children are folded with the same handlers before the node handler runs.
+上げる エダ は JヒダリッJアタイッJミギッJハバッJエダバッ「「「エダバ」足す「「「ヒダリ」足す「ハバ」」足す「エダバ」」」足す「アタイ」」足す「「「ミギ」足す「ハバ」」足す「エダバ」」
+
+え Sum a tree.
+え Leaf handler: return the leaf value.
+え Node handler: left_sum + value + right_sum.
+上げる ゴウケイ は Jキッ「「キ」足す「Jアタイッアタイ」」足す「JヒダリッJアタイッJミギッ「「タス」足す「ヒダリ」」足す「「「タス」足す「アタイ」」足す「ミギ」」」
+
+え Tree: Node (Leaf 1) 2 (Node (Leaf 3) 4 (Leaf 5))
+上げる キ は 「「「エダ」足す「「ハ」足す「イチ」」」足す「ニ」」足す「「「「エダ」足す「「ハ」足す「サン」」」足す「ヨン」」足す「「ハ」足す「ゴ」」」
+
+え Sum all values in the tree. The result is 15.
+「ゴウケイ」足す「キ」
