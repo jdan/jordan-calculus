@@ -1,0 +1,34 @@
+え Option / Maybe in JordanCalculus
+え
+え An option is either:
+え   ナシ          no value
+え   アリ value    one present value
+え
+え To consume an option, provide two branches:
+え   a branch for ナシ
+え   a function branch for アリ
+
+上げる タス は JムッJンッJフッJエッ「「ム」足す「フ」」足す「「「ン」足す「フ」」足す「エ」」
+上げる ゼロ は JフッJエッエ
+上げる イチ は JフッJエッ「フ」足す「エ」
+上げる ヨンジュウニ は JフッJエッ「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「「フ」足す「エ」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」」
+
+え None: choose the none branch and ignore the some branch.
+上げる ナシ は JナシバッJアリバッナシバ
+
+え Some value: ignore the none branch and apply the some branch to the value.
+上げる アリ は JアタイッJナシバッJアリバッ「アリバ」足す「アタイ」
+
+え map option function option.
+え If the option is ナシ, preserve ナシ.
+え If the option is アリ value, return アリ (function value).
+上げる ウツス は JカンスウッJオプションッ「「オプション」足す「ナシ」」足す「Jアタイッ「アリ」足す「「カンスウ」足す「アタイ」」」
+
+え Add one to a Church numeral.
+上げる フヤス は Jンッ「「タス」足す「ン」」足す「イチ」
+
+え Extract an option as a number, defaulting to zero for ナシ.
+上げる トリダス は Jオプションッ「「オプション」足す「ゼロ」」足す「Jアタイッアタイ」
+
+え Start with Some 42, map increment over it, then extract it. The result is 43.
+「トリダス」足す「「「ウツス」足す「フヤス」」足す「「アリ」足す「ヨンジュウニ」」」
